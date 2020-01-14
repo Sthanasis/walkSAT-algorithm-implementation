@@ -1,7 +1,6 @@
 import random
 import math
 import time
-import concurrent.futures
 
 # # Read file
 file = open('two.dimacs', 'r' )
@@ -35,7 +34,8 @@ model =  {x: random.choice([True, False]) for x in symbols}
 
 # Track True and False clauses in clauses[]
 clauseResult = {x: False for x in range(1, numClauses + 1)}
-print('Finished Parshing File! Executing phase 2...')
+print('Finished Parshing File! Executing phase 2... time took', time.perf_counter() - start,'seconds')
+
 # add model values to clauses
 def modelizeClauses():
     for clause in clauses:
@@ -113,7 +113,7 @@ def randomFlipperTwo():
         model[minKey] = not model[minKey]
     return model
 
-# With probability 0.5 randomFlipper1 or randomFlipper2
+# With probability 0.5 randomFlipper1 or randomFlipper2 // heuristic
 def randomizer():
     prob = random.random() 
     setClauseResultToFalse()
@@ -125,7 +125,8 @@ def randomizer():
 
 def walksat(maxFlips):
     counter = 0
-    for i in range(0, maxFlips): 
+    i = 1
+    while i <= maxFlips and int(time.perf_counter() - start) <= 30:
         check = isModelSatisfying() 
         if check:
             writeFile.write('Satisfying model: ' + str(model) + ': Performed ' + str(i) + ' flips! ')
@@ -138,9 +139,7 @@ def walksat(maxFlips):
             writeFile.write('Failure to satisfy all clauses. Performed ' + str(maxFlips) + ' flips! ')
             return 'failure'
 
-walksat(20)
-    
-
+walksat(200)
 
 finish = time.perf_counter()
 print('It took ', str(finish-start), ' seconds')
