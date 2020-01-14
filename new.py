@@ -68,6 +68,7 @@ def setClauseResultToFalse():
     for i in clauseResult:
         if clauseResult[i] == True:
             clauseResult[i] = False
+    return clauseResult
 
 # Check clauseResult for false clauses
 def check():
@@ -85,36 +86,43 @@ def createFlagList(falseClausesResult):
             flagList.append(abs(key))
     return flagList   
 
-# With probability 0.5 flip random var or best var
+
+def randomFlipperOne():
+    randChoise = random.choice(check())
+    randkey = abs(random.choice(list(randChoise.keys())))
+    model[randkey] = not model[randkey]
+    return model
+
+
+def randomFlipperTwo():
+    minKey = 0
+    minValue = None
+    flagList = createFlagList(check())
+    for item in flagList:
+        model[item] = not model[item]
+        modelizeClauses()
+        falseFlipResults = check()
+        if minValue is None:
+            minKey = item                       #Best variable
+            minValue = len(falseFlipResults)    #Best variable position
+        elif minValue > len(falseFlipResults):
+            minKey = item
+            minValue = len(falseFlipResults)
+        model[item] = not model[item]
+    if minKey != 0:
+        model[minKey] = not model[minKey]
+    return model
+
+# With probability 0.5 randomFlipper1 or randomFlipper2
 def randomizer():
     prob = random.random() 
-    falseClausesResult = check() 
     setClauseResultToFalse()
-    if prob <= 0.3:
-        randChoise = random.choice(falseClausesResult)
-        randkey = abs(random.choice(list(randChoise.keys())))
-        model[randkey] = not model[randkey]
-        return model
+    if prob < 0.5:
+        randomFlipperOne()
     else:
-        minKey = 0
-        minValue = None
-        flagList = createFlagList(falseClausesResult)
-        for item in flagList:
-            model[item] = not model[item]
-            modelizeClauses()
-            falseFlipResults = check()
-            if minValue is None:
-                minKey = item                       #Best variable
-                minValue = len(falseFlipResults)    #Best variable position
-            elif minValue > len(falseFlipResults):
-                minKey = item
-                minValue = len(falseFlipResults)
-            model[item] = not model[item]
-        if minKey != 0:
-            model[minKey] = not model[minKey]
-        return model
+        randomFlipperTwo()
         
-maxFlips = 10
+
 def walksat(maxFlips):
     counter = 0
     for i in range(0, maxFlips): 
@@ -130,7 +138,7 @@ def walksat(maxFlips):
             writeFile.write('Failure to satisfy all clauses. Performed ' + str(maxFlips) + ' flips! ')
             return 'failure'
 
-walksat(10)
+walksat(20)
     
 
 
