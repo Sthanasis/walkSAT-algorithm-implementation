@@ -1,0 +1,1 @@
+Failure to satisfy all clauses. Performed 10 flips! 
