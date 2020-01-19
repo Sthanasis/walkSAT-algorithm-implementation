@@ -31,23 +31,19 @@ for i in range(0, numClauses):
 
 # assign random boolean values in model
 model =  {x: random.choice([True, False]) for x in symbols}
-
+taboo = [] # List to use in taboo search
+for i in range(0, int(numVar/10)):
+    taboo.append(0)
 # Track True and False clauses in clauses[]
 clauseResult = {x: False for x in range(1, numClauses + 1)}
 print('Finished Parshing File! Executing phase 2... time took', time.perf_counter() - start,'seconds')
 
-taboo = []
-
-print(len(taboo))
+# Taboo Search
 def addToTabooList(key):
-    taboo = []
-    if len(taboo) <= 2:
-        taboo.append(key)
-    else:
-        taboo.pop(0)
-        taboo.append(key)
+    taboo.pop(0)
+    taboo.append(key)
+    print(taboo)
     return taboo
-
 
 # add model values to clauses
 def modelizeClauses():
@@ -60,7 +56,7 @@ def modelizeClauses():
     return clauses
 
 # modelizeClauses() and check if model satisfies clauses
-def isModelSatisfying():
+def countTrueClauses():
     count = 1
     clauses = modelizeClauses()
     for clause in clauses:  
@@ -71,7 +67,10 @@ def isModelSatisfying():
                         clauseResult[y] = True  
                         count += 1               
                 break  
-    print('Satisfied: ', count,'/',numClauses,' clauses')
+    return count
+
+def isModelSatisfying(number):
+    count = number
     if count <= numClauses:    
         return False
     return True
@@ -103,30 +102,35 @@ def createFlagList(falseClausesResult):
 def randomFlipperOne():
     randChoise = random.choice(check())
     randkey = abs(random.choice(list(randChoise.keys())))
-    model[randkey] = not model[randkey]
+    if(randkey not in taboo):
+        model[randkey] = not model[randkey]
+        addToTabooList(randkey)
+    else:
+        randomFlipperOne()
     return model
-
 
 def randomFlipperTwo():
     minKey = 0
     minValue = None
     flagList = createFlagList(check())
     for item in flagList:
-        model[item] = not model[item]
-        modelizeClauses()
-        falseFlipResults = check()
-        if minValue is None:
-            minKey = item                       #Best variable
-            minValue = len(falseFlipResults)    #Best variable position
-        elif minValue > len(falseFlipResults):
-            minKey = item
-            minValue = len(falseFlipResults)
-        model[item] = not model[item]
+        if item not in taboo:
+            model[item] = not model[item]
+            modelizeClauses()
+            falseFlipResults = check()
+            if minValue is None:
+                minKey = item                       #Best variable
+                minValue = len(falseFlipResults)    #Best variable position
+            elif minValue > len(falseFlipResults):
+                minKey = item
+                minValue = len(falseFlipResults)
+            model[item] = not model[item]
     if minKey != 0:
         model[minKey] = not model[minKey]
+        addToTabooList(minKey)
     return model
 
-# With probability 0.5 randomFlipper1 or randomFlipper2 // heuristic
+# With probability 0.5 randomFlipper1 or randomFlipper2 
 def randomizer():
     prob = random.random() 
     setClauseResultToFalse()
@@ -137,23 +141,28 @@ def randomizer():
         
 
 def walksat(maxFlips):
+    maxCounter = 0 # find the best solution if walkSAT fails to satisfy
+    optimizedModel = model # Store the best solution if walkSAT fails to satisfy
     counter = 0
     i = 1
-    while i <= maxFlips and int(time.perf_counter() - start) <= 30:
-        check = isModelSatisfying() 
+    while i <= maxFlips and int(time.perf_counter() - start) <= 10:
+        temp = countTrueClauses()
+        check = isModelSatisfying(temp) 
         if check:
             writeFile.write('Satisfying model: ' + str(model) + ': Performed ' + str(i) + ' flips! ')
             return model
-            break
         randomizer()
+        if temp > maxCounter:
+            maxCounter = temp
+            optimizedModel = model
         counter = counter + 1
         print('Fliped Times: ', counter)
-        if counter == maxFlips:
-            writeFile.write('Failure to satisfy all clauses. Performed ' + str(maxFlips) + ' flips! ')
-            return 'failure'
+    writeFile.write('Failure to satisfy all clauses. Best Solution found:' + str(optimizedModel))
+    return model
+        
 
 try:
-    walksat(200)
+    walksat(1000000)
     finish = time.perf_counter()
     print('It took ', str(finish-start), ' seconds')
 except:
