@@ -36,6 +36,19 @@ model =  {x: random.choice([True, False]) for x in symbols}
 clauseResult = {x: False for x in range(1, numClauses + 1)}
 print('Finished Parshing File! Executing phase 2... time took', time.perf_counter() - start,'seconds')
 
+taboo = []
+
+print(len(taboo))
+def addToTabooList(key):
+    taboo = []
+    if len(taboo) <= 2:
+        taboo.append(key)
+    else:
+        taboo.pop(0)
+        taboo.append(key)
+    return taboo
+
+
 # add model values to clauses
 def modelizeClauses():
     for clause in clauses:
@@ -139,7 +152,9 @@ def walksat(maxFlips):
             writeFile.write('Failure to satisfy all clauses. Performed ' + str(maxFlips) + ' flips! ')
             return 'failure'
 
-walksat(200)
-
-finish = time.perf_counter()
-print('It took ', str(finish-start), ' seconds')
+try:
+    walksat(200)
+    finish = time.perf_counter()
+    print('It took ', str(finish-start), ' seconds')
+except:
+    print('Something interrupted the execution')
