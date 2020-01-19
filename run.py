@@ -31,18 +31,16 @@ for i in range(0, numClauses):
 
 # assign random boolean values in model
 model =  {x: random.choice([True, False]) for x in symbols}
-taboo = [] # List to use in taboo search
-for i in range(0, int(numVar/10)):
-    taboo.append(0)
+taboo = [0 for i in range(0, int(numVar/10))] # List to use in taboo search
+print(len(taboo))
+
 # Track True and False clauses in clauses[]
 clauseResult = {x: False for x in range(1, numClauses + 1)}
-print('Finished Parshing File! Executing phase 2... time took', time.perf_counter() - start,'seconds')
 
 # Taboo Search
 def addToTabooList(key):
     taboo.pop(0)
     taboo.append(key)
-    print(taboo)
     return taboo
 
 # add model values to clauses
@@ -144,12 +142,11 @@ def walksat(maxFlips):
     maxCounter = 0 # find the best solution if walkSAT fails to satisfy
     optimizedModel = model # Store the best solution if walkSAT fails to satisfy
     counter = 0
-    i = 1
-    while i <= maxFlips and int(time.perf_counter() - start) <= 10:
+    while counter < maxFlips and int(time.perf_counter() - start) <= 10:
         temp = countTrueClauses()
         check = isModelSatisfying(temp) 
         if check:
-            writeFile.write('Satisfying model: ' + str(model) + ': Performed ' + str(i) + ' flips! ')
+            writeFile.write('Solved!!! Satisfying model: ' + str(model))
             return model
         randomizer()
         if temp > maxCounter:
@@ -157,7 +154,7 @@ def walksat(maxFlips):
             optimizedModel = model
         counter = counter + 1
         print('Fliped Times: ', counter)
-    writeFile.write('Failure to satisfy all clauses. Best Solution found:' + str(optimizedModel))
+    writeFile.write('Failure to satisfy all clauses. Clauses Satisfied: ' + str(maxCounter) + '! Best Solution found:' + str(optimizedModel))
     return model
         
 
