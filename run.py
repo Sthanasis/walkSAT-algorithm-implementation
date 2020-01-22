@@ -3,8 +3,8 @@ import math
 import time
 
 # # Read file
-file = open('two.dimacs', 'r' )
-writeFile = open('two.txt', 'w')
+file = open('On.dimacs', 'r' )
+writeFile = open('On.txt', 'w')
 start = time.perf_counter()
 ## Parsing file
 # ========================================
@@ -37,7 +37,10 @@ print(len(taboo))
 # Track True and False clauses in clauses[]
 clauseResult = {x: False for x in range(1, numClauses + 1)}
 
-# Taboo Search
+
+#============================================================================================================
+
+# Tabu Search
 def addToTabooList(key):
     taboo.pop(0)
     taboo.append(key)
@@ -55,21 +58,17 @@ def modelizeClauses():
 
 # modelizeClauses() and check if model satisfies clauses
 def countTrueClauses():
-    count = 1
-    clauses = modelizeClauses()
+    count = 0
     for clause in clauses:  
         for x in clause:
-            if clause[x] == True:
-                for y in clauseResult:
-                    if y == clauses.index(clause) + 1:
-                        clauseResult[y] = True  
-                        count += 1               
+            if clause[x] is True:
+                clauseResult[clauses.index(clause) + 1] = True
+                count += 1               
                 break  
     return count
 
 def isModelSatisfying(number):
-    count = number
-    if count <= numClauses:    
+    if number < numClauses:    
         return False
     return True
 
@@ -89,9 +88,9 @@ def check():
     return falseItem
 
 #Put false clauses into 'flagList' list
-def createFlagList(falseClausesResult):
+def createFlagList(falseItem):
     flagList = []
-    for clause in falseClausesResult:
+    for clause in falseItem:
         for key in clause:
             flagList.append(abs(key))
     return flagList   
@@ -108,58 +107,64 @@ def randomFlipperOne():
     return model
 
 def randomFlipperTwo():
-    minKey = 0
-    minValue = None
+    maxKey = 0
+    maxValue = 0
     flagList = createFlagList(check())
+    falseFlipResults = [] #list of Flip Results
+    positions = [] # list of keys
     for item in flagList:
         if item not in taboo:
             model[item] = not model[item]
             modelizeClauses()
-            falseFlipResults = check()
-            if minValue is None:
-                minKey = item                       #Best variable
-                minValue = len(falseFlipResults)    #Best variable position
-            elif minValue > len(falseFlipResults):
-                minKey = item
-                minValue = len(falseFlipResults)
+            temp = countTrueClauses()
+            falseFlipResults.append(temp)
+            positions.append(item)
             model[item] = not model[item]
-    if minKey != 0:
-        model[minKey] = not model[minKey]
-        addToTabooList(minKey)
+            modelizeClauses()
+            if temp == numClauses:
+                break
+    maxValue = max(falseFlipResults)
+    maxKey = falseFlipResults.index(maxValue)
+    item = positions[maxKey]
+    model[item] = not model[item]
+    addToTabooList(item)
     return model
 
+
 # With probability 0.5 randomFlipper1 or randomFlipper2 
-def randomizer():
+def randomWalk():
     prob = random.random() 
-    setClauseResultToFalse()
     if prob < 0.5:
         randomFlipperOne()
     else:
         randomFlipperTwo()
         
 
-def walksat(maxFlips):
+def walkSAT(maxFlips):
     maxCounter = 0 # find the best solution if walkSAT fails to satisfy
     optimizedModel = model # Store the best solution if walkSAT fails to satisfy
     counter = 0
     while counter < maxFlips and int(time.perf_counter() - start) <= 10:
+        modelizeClauses()
         temp = countTrueClauses()
         check = isModelSatisfying(temp) 
         if check:
+            print('All Clauses Satisfied!')
             writeFile.write('Solved!!! Satisfying model: ' + str(model))
             return model
-        randomizer()
+        randomWalk()
+        setClauseResultToFalse() #initialize clauseResult list
         if temp > maxCounter:
             maxCounter = temp
             optimizedModel = model
         counter = counter + 1
         print('Fliped Times: ', counter)
+        print('clauses Satisfied: ', temp)
     writeFile.write('Failure to satisfy all clauses. Clauses Satisfied: ' + str(maxCounter) + '! Best Solution found:' + str(optimizedModel))
     return model
-        
 
 try:
-    walksat(1000000)
+    walkSAT(1000000)
     finish = time.perf_counter()
     print('It took ', str(finish-start), ' seconds')
 except:
