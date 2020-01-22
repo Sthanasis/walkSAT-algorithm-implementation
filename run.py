@@ -3,8 +3,8 @@ import math
 import time
 
 # # Read file
-file = open('On.dimacs', 'r' )
-writeFile = open('On.txt', 'w')
+file = open('fla-qhid-200-1.cnf', 'r' )
+writeFile = open('fla-qhid-200-1.txt', 'w')
 start = time.perf_counter()
 ## Parsing file
 # ========================================
@@ -31,7 +31,7 @@ for i in range(0, numClauses):
 
 # assign random boolean values in model
 model =  {x: random.choice([True, False]) for x in symbols}
-taboo = [0 for i in range(0, int(numVar/10))] # List to use in taboo search
+taboo = [0 for i in range(0, int(numVar/20))] # List to use in taboo search
 print(len(taboo))
 
 # Track True and False clauses in clauses[]
@@ -115,10 +115,12 @@ def randomFlipperTwo():
     for item in flagList:
         if item not in taboo:
             model[item] = not model[item]
+            #check how many clauses satifies the flip
             modelizeClauses()
             temp = countTrueClauses()
             falseFlipResults.append(temp)
             positions.append(item)
+            #flip back
             model[item] = not model[item]
             modelizeClauses()
             if temp == numClauses:
@@ -144,7 +146,7 @@ def walkSAT(maxFlips):
     maxCounter = 0 # find the best solution if walkSAT fails to satisfy
     optimizedModel = model # Store the best solution if walkSAT fails to satisfy
     counter = 0
-    while counter < maxFlips and int(time.perf_counter() - start) <= 10:
+    while counter < maxFlips and int(time.perf_counter() - start) <= 60:
         modelizeClauses()
         temp = countTrueClauses()
         check = isModelSatisfying(temp) 
